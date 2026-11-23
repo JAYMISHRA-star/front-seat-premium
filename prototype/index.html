@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlaBlaCar Seat Selection Concept</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a phone-sized booking flow on the left, a live "how the money moves" panel and a driver pricing simulator on the right; stacks to one column on phones. */
+:root{
+  --bg:#f1f6f7; --surface:#ffffff; --ink:#054752; --muted:#5b7a82; --line:#dbe6e9;
+  --accent:#00aff5; --accent-strong:#0077b6; --on-accent:#ffffff;
+  --front-bg:#e0f5fe; --saver:#0f7f58; --saver-bg:#e3f5ee; --taken:#e6ecee; --taken-ink:#8aa2a8;
+  --warn:#9a5b00; --warn-bg:#fff3dc;
+  --shadow:0 10px 30px rgba(5,71,82,.10);
+  --font:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#071f25; --surface:#0e2d35; --ink:#e6f3f6; --muted:#93b0b8; --line:#1e434d;
+    --accent:#35c0fa; --accent-strong:#35c0fa; --on-accent:#04222b;
+    --front-bg:#0f3d52; --saver:#4fd1a1; --saver-bg:#12382f; --taken:#173840; --taken-ink:#5f7f88;
+    --warn:#f5c26b; --warn-bg:#3a2c10;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#071f25; --surface:#0e2d35; --ink:#e6f3f6; --muted:#93b0b8; --line:#1e434d;
+  --accent:#35c0fa; --accent-strong:#35c0fa; --on-accent:#04222b;
+  --front-bg:#0f3d52; --saver:#4fd1a1; --saver-bg:#12382f; --taken:#173840; --taken-ink:#5f7f88;
+  --warn:#f5c26b; --warn-bg:#3a2c10;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+
+.page{max-width:1080px;margin:0 auto;padding:28px 20px 40px;display:flex;flex-direction:column;gap:22px}
+.top{display:flex;flex-direction:column;gap:6px;max-width:68ch}
+.tag{align-self:flex-start;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-strong);background:var(--front-bg);padding:4px 10px;border-radius:999px}
+.top h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.top p{color:var(--muted)}
+.stage{display:grid;grid-template-columns:minmax(0,390px) minmax(0,1fr);gap:28px;align-items:start}
+
+/* phone */
+.phone{background:var(--surface);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);height:780px;display:flex;flex-direction:column;overflow:hidden;position:sticky;top:16px}
+.bar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.back{width:38px;height:38px;border-radius:50%;border:0;background:transparent;font-size:20px;line-height:1;display:grid;place-items:center;color:var(--accent-strong)}
+.back:hover{background:var(--front-bg)}
+.back[hidden]{display:none}
+.bar-title{display:flex;flex-direction:column;min-width:0}
+.bar-title strong{font-size:16px;font-weight:700}
+.bar-title span{font-size:13px;color:var(--muted)}
+.steps{display:flex;gap:6px;padding:10px 16px 0}
+.steps i{flex:1;height:4px;border-radius:4px;background:var(--line)}
+.steps i.on{background:var(--accent)}
+.screen{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.cta{border-top:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cta .sum{display:flex;flex-direction:column;min-width:0}
+.cta .sum small{color:var(--muted);font-size:13px}
+.cta .sum b{font-size:20px;font-weight:800}
+.btn{border:0;border-radius:999px;background:var(--accent-strong);color:var(--on-accent);font-weight:700;padding:13px 22px;white-space:nowrap}
+.btn:disabled{background:var(--taken);color:var(--taken-ink);cursor:not-allowed}
+.btn.wide{width:100%}
+.btn.ghost{background:transparent;color:var(--accent-strong);border:2px solid var(--accent-strong);padding:11px 20px}
+
+/* ride cards */
+.ride{display:flex;flex-direction:column;gap:12px;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px}
+.ride:hover{border-color:var(--accent)}
+.ride-top{display:flex;justify-content:space-between;gap:12px}
+.times{display:grid;grid-template-columns:auto 14px 1fr;column-gap:10px;row-gap:10px;align-items:center}
+.times b{font-weight:700}
+.dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--ink);justify-self:center;position:relative}
+.dot.a::after{content:"";position:absolute;left:2px;top:8px;width:2px;height:22px;background:var(--ink)}
+.price{text-align:right;white-space:nowrap}
+.price small{display:block;color:var(--muted);font-size:12px}
+.price b{font-size:20px;font-weight:800}
+.ride-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding-top:10px;flex-wrap:wrap}
+.driver{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--front-bg);color:var(--accent-strong);font-weight:800;display:grid;place-items:center;font-size:14px}
+.driver small{display:block;color:var(--muted);font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.chip.new{background:var(--front-bg);color:var(--accent-strong);border-color:transparent}
+.hint{font-size:13px;color:var(--muted)}
+
+/* seat map */
+.car{align-self:center;width:268px;background:var(--bg);border:2px solid var(--line);border-radius:64px 64px 34px 34px;padding:54px 18px 22px;display:flex;flex-direction:column;gap:18px;position:relative}
+.car::before{content:"Front of car";position:absolute;top:16px;left:0;right:0;text-align:center;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;justify-content:space-between;gap:8px}
+.row.two{padding:0 2px}
+.seat{flex:1;min-width:0;min-height:66px;border-radius:14px 14px 10px 10px;border:2px solid var(--line);background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 2px;font-size:12px;font-weight:600}
+.row.two .seat{max-width:104px}
+.seat b{font-size:14px;font-weight:800}
+.seat.front{background:var(--front-bg);border-color:var(--accent)}
+.seat.saver{background:var(--saver-bg);border-color:var(--saver)}
+.seat.saver b{color:var(--saver)}
+.seat:not(:disabled):hover{transform:translateY(-1px)}
+.seat.sel{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--on-accent)}
+.seat.sel b{color:var(--on-accent)}
+.seat:disabled{cursor:not-allowed;color:var(--taken-ink);border-style:dashed;background:repeating-linear-gradient(135deg,var(--taken) 0 6px,transparent 6px 12px)}
+.seat.wheel{border-style:solid;background:var(--taken);color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;font-size:12px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:4px;border:2px solid var(--line);background:var(--surface)}
+.sw.front{background:var(--front-bg);border-color:var(--accent)}
+.sw.saver{background:var(--saver-bg);border-color:var(--saver)}
+.sw.sel{background:var(--accent-strong);border-color:var(--accent-strong)}
+.sw.tk{border-style:dashed;background:var(--taken)}
+
+/* review + confirm */
+.card{border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.card h3{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.line{display:flex;justify-content:space-between;gap:12px}
+.line.total{border-top:1px solid var(--line);padding-top:10px;font-weight:800;font-size:18px}
+.line span:first-child{min-width:0}
+.pay{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.pay:has(input:checked){border-color:var(--accent);background:var(--front-bg)}
+.pay input{accent-color:var(--accent-strong);width:18px;height:18px;margin:0}
+.ok{align-self:center;width:64px;height:64px;border-radius:50%;background:var(--saver-bg);color:var(--saver);display:grid;place-items:center;font-size:30px;font-weight:800}
+.center{text-align:center}
+.ticket{border:2px dashed var(--accent);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--front-bg)}
+.ticket .big{font-size:22px;font-weight:800}
+.safety{border-radius:14px;padding:12px 14px;background:var(--saver-bg);display:flex;flex-direction:column;gap:8px}
+.safety strong{color:var(--saver)}
+.safety p{font-size:14px}
+
+/* notes panel */
+.notes{display:flex;flex-direction:column;gap:16px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.panel.drv{border:2px solid var(--accent)}
+.panel h2{font-size:18px;font-weight:800}
+.panel p,.panel li{color:var(--muted);max-width:62ch}
+.panel ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.panel strong{color:var(--ink)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-strong)}
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.tile small{color:var(--muted);font-size:13px}
+.tile b{font-size:22px;font-weight:800}
+.ctl{display:flex;flex-direction:column;gap:8px}
+.ctl label{font-weight:700;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+.ctl input[type=range]{width:100%;accent-color:var(--accent-strong)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg label{display:flex;flex-direction:column;gap:2px;padding:10px 12px;cursor:pointer;font-size:14px}
+.seg label+label{border-left:1px solid var(--line)}
+.seg label small{color:var(--muted);font-weight:500;font-size:12px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--front-bg)}
+.seg label:has(input:checked) b{color:var(--accent-strong)}
+.seg label:has(input:focus-visible){outline:3px solid var(--accent);outline-offset:-3px}
+.ridepick{display:flex;gap:8px;flex-wrap:wrap}
+.ridepick button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.ridepick button[aria-pressed=true]{background:var(--accent-strong);border-color:var(--accent-strong);color:var(--on-accent)}
+.flag{font-size:13px;border-radius:10px;padding:8px 10px;background:var(--warn-bg);color:var(--warn)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right}
+td.up{color:var(--accent-strong);font-weight:700}
+td.down{color:var(--saver);font-weight:700}
+tfoot td{font-weight:800;border-bottom:0}
+.foot{font-size:13px;color:var(--muted);max-width:80ch}
+
+@media (max-width:860px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .phone{height:auto;min-height:640px;max-width:430px;width:100%;justify-self:center;position:static}
+  .flow{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:420px){
+  .page{padding:16px 16px 32px}
+  .top h1{font-size:23px}
+  .car{width:100%;max-width:268px}
+  .seg{grid-template-columns:minmax(0,1fr)}
+  .seg label+label{border-left:0;border-top:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.seat:not(:disabled):hover{transform:none}}
+</style>
+
+<div class="page">
+  <header class="top">
+    <span class="tag">Concept prototype · PM case study</span>
+    <h1>Choose your seat, pay for the seat you get</h1>
+    <p>A proposed seat-selection feature for carpool rides in India. Book a seat in the phone as a rider. Then use the driver panel to change the front-seat premium and the pricing mode, and watch every price and the money split update.</p>
+  </header>
+
+  <div class="stage">
+    <section class="phone" aria-label="Booking flow prototype">
+      <div class="bar">
+        <button class="back" id="back" type="button" aria-label="Go back" hidden>&#8592;</button>
+        <div class="bar-title"><strong id="barTitle"></strong><span id="barSub"></span></div>
+      </div>
+      <div class="steps" id="steps" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="screen" id="screen" aria-live="polite"></div>
+      <div class="cta" id="cta"></div>
+    </section>
+
+    <aside class="notes">
+      <div class="panel drv">
+        <span class="eyebrow">Driver view</span>
+        <h2>Set your seat pricing</h2>
+        <div class="ridepick" id="ridePick" role="group" aria-label="Choose which car to price"></div>
+        <div class="ctl">
+          <label for="prem"><span>Front-seat premium</span><span class="num" id="premVal"></span></label>
+          <input type="range" id="prem" min="0" max="150" step="10">
+          <span class="hint">Platform band for this corridor: ₹0 to ₹150.</span>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Pricing mode">
+          <label for="mode-neutral"><input type="radio" name="mode" id="mode-neutral" value="neutral" checked><b>Revenue-neutral</b><small>Back seats get cheaper. A full car earns the same.</small></label>
+          <label for="mode-uplift"><input type="radio" name="mode" id="mode-uplift" value="uplift"><b>Uplift</b><small>Other seats stay the same. A full car earns more.</small></label>
+        </div>
+        <p class="flag" id="modeFlag" hidden>Uplift mode means the driver earns more than the cost of the trip. In India this could make a private-car carpool look commercial, so it would launch only after a legal review.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Money flow for this booking</h2>
+        <div class="flow">
+          <div class="tile"><small>Rider pays</small><b class="num" id="mRider">₹0</b></div>
+          <div class="tile"><small>Driver receives</small><b class="num" id="mDriver">₹0</b></div>
+          <div class="tile"><small>Platform earns</small><b class="num" id="mPlat">₹0</b></div>
+        </div>
+        <p id="mNote">Pick a ride and a seat to see the split.</p>
+      </div>
+
+      <div class="panel">
+        <h2 id="tTitle">Seat prices in this car</h2>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Seat</th><th class="r">Today (flat)</th><th class="r">Proposed</th><th class="r">Change</th></tr></thead>
+            <tbody id="tBody"></tbody>
+            <tfoot><tr><td>Full car, driver total</td><td class="r num" id="tFlat"></td><td class="r num" id="tNew"></td><td class="r num" id="tDiff"></td></tr></tfoot>
+          </table>
+        </div>
+        <p id="tNote"></p>
+      </div>
+
+      <div class="panel">
+        <h2>What the feature changes</h2>
+        <ul>
+          <li><strong>Seat map at booking.</strong> Riders see the car from above and pick a seat, the way they pick a seat on a flight.</li>
+          <li><strong>Three price tiers.</strong> The front seat costs more, window seats stay at the driver's price, and centre and back-row seats can cost less.</li>
+          <li><strong>Driver control.</strong> Drivers opt in, set the premium within a band and see each seat's earnings before they publish.</li>
+          <li><strong>In-app payment.</strong> A reserved seat needs a paid booking. That gives riders a reason to pay in the app, and gives the platform a booking fee it does not collect in India today.</li>
+          <li><strong>Free safety switch.</strong> A rider can move from the front seat to any free back seat at pickup and get the difference back.</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <p class="foot">Student case-study prototype. Not affiliated with or endorsed by BlaBlaCar. Rides, drivers, prices and the ₹15 booking fee are illustrative assumptions, and no payment is taken anywhere on this page.</p>
+</div>
+
+<script>
+(function(){
+  var FEE = 15, MAX = 3;
+  var ROUTE = {from:'Indore', to:'Bhopal', date:'Sat 28 Nov', pick:'Vijay Nagar Square', drop:'MP Nagar Zone 1'};
+  // w = discount weight for saver seats: worse seats get a bigger share of the discount.
+  var RIDES = [
+    {id:'ertiga', driver:'Vikram S.', init:'V', rating:'4.8', trips:212, car:'Maruti Ertiga', type:'7-seater', dep:'07:30', arr:'11:00', base:390, prem:100,
+     rows:[
+       [{id:'F1',short:'Front',name:'Front seat',tier:'front'},{wheel:true}],
+       [{id:'M1',short:'Window',name:'Middle row, left window',tier:'std'},{id:'M2',short:'Centre',name:'Middle row, centre',tier:'saver',w:1},{id:'M3',short:'Window',name:'Middle row, right window',tier:'std',taken:true}],
+       [{id:'B1',short:'Back',name:'Back row, left',tier:'saver',w:2,taken:true},{id:'B2',short:'Back',name:'Back row, right',tier:'saver',w:2}]
+     ]},
+    {id:'dzire', driver:'Ananya R.', init:'A', rating:'4.9', trips:87, car:'Maruti Dzire', type:'5-seater', dep:'09:15', arr:'12:40', base:420, prem:60,
+     rows:[
+       [{id:'F1',short:'Front',name:'Front seat',tier:'front'},{wheel:true}],
+       [{id:'R1',short:'Window',name:'Back seat, left window',tier:'std',taken:true},{id:'R2',short:'Centre',name:'Back seat, centre',tier:'saver',w:1},{id:'R3',short:'Window',name:'Back seat, right window',tier:'std'}]
+     ]}
+  ];
+  var S = {screen:'list', ride:null, sel:[], pay:'upi', mode:'neutral', drv:'ertiga'};
+  var $ = function(id){return document.getElementById(id)};
+  var rs = function(n){return '₹' + n.toLocaleString('en-IN')};
+  var signed = function(n){return n === 0 ? 'No change' : (n > 0 ? '+' : '−') + '₹' + Math.abs(n)};
+  var byId = function(id){return RIDES.filter(function(r){return r.id===id})[0]};
+
+  function seats(r){var a=[];r.rows.forEach(function(row){row.forEach(function(s){if(!s.wheel)a.push(s)})});return a}
+  function seat(r,id){return seats(r).filter(function(s){return s.id===id})[0]}
+  // Revenue-neutral: split the premium across saver seats by weight, rounded to the rupee,
+  // with the last saver seat absorbing any rounding so the total stays exact.
+  function delta(r,s){
+    if(s.tier==='front') return r.prem;
+    if(s.tier!=='saver' || S.mode==='uplift' || r.prem===0) return 0;
+    var sv = seats(r).filter(function(x){return x.tier==='saver'});
+    var tw = sv.reduce(function(t,x){return t+x.w},0), used = 0;
+    for(var i=0;i<sv.length;i++){
+      var share = i===sv.length-1 ? r.prem-used : Math.round(r.prem*sv[i].w/tw);
+      used += share;
+      if(sv[i]===s) return -share;
+    }
+    return 0;
+  }
+  function tierOf(r,s){var d=delta(r,s);return d>0?'front':d<0?'saver':'std'}
+  function price(r,s){return r.base + delta(r,s)}
+  function fromPrice(r){return Math.min.apply(null, seats(r).filter(function(s){return !s.taken}).map(function(s){return price(r,s)}))}
+  function selTotal(){var r=S.ride;return S.sel.reduce(function(t,id){return t+price(r,seat(r,id))},0)}
+  function seatList(){var r=S.ride;return S.sel.map(function(id){return seat(r,id).name}).join(', ')}
+
+  function go(screen){S.screen=screen;render();$('screen').scrollTop=0}
+
+  function renderList(){
+    $('barTitle').textContent = ROUTE.from + ' → ' + ROUTE.to;
+    $('barSub').textContent = ROUTE.date + ' · 1 passenger';
+    var h = '<p class="hint">2 rides available. Seat prices now depend on where you sit.</p>';
+    RIDES.forEach(function(r){
+      var frontFree = !seat(r,'F1').taken;
+      h += '<button class="ride" type="button" data-ride="'+r.id+'">'
+        + '<div class="ride-top"><div class="times">'
+        + '<b class="num">'+r.dep+'</b><span class="dot a"></span><span>'+ROUTE.from+'</span>'
+        + '<b class="num">'+r.arr+'</b><span class="dot"></span><span>'+ROUTE.to+'</span>'
+        + '</div><div class="price"><small>from</small><b class="num">'+rs(fromPrice(r))+'</b></div></div>'
+        + '<div class="ride-foot"><div class="driver"><span class="avatar">'+r.init+'</span><span>'+r.driver+'<small>★ '+r.rating+' · '+r.trips+' rides</small></span></div>'
+        + '<div class="chips"><span class="chip">'+r.car+' · '+r.type+'</span>'+(frontFree?'<span class="chip new">Front seat available</span>':'')+'</div></div>'
+        + '</button>';
+    });
+    $('screen').innerHTML = h;
+    $('cta').innerHTML = '<span class="hint">Choose a ride to pick your seat.</span>';
+  }
+
+  function renderSeats(){
+    var r = S.ride;
+    $('barTitle').textContent = 'Choose your seat';
+    $('barSub').textContent = r.car + ' · ' + r.type + ' · ' + r.driver;
+    var h = '<p class="hint">Tap a seat. You can book up to '+MAX+' seats. The driver sits on the right.</p><div class="car">';
+    r.rows.forEach(function(row){
+      h += '<div class="row'+(row.length===2?' two':'')+'">';
+      row.forEach(function(s){
+        if(s.wheel){h += '<button class="seat wheel" type="button" disabled aria-label="Driver seat">Driver</button>';return}
+        if(s.taken){h += '<button class="seat" type="button" disabled aria-label="'+s.name+', already booked">Booked</button>';return}
+        var on = S.sel.indexOf(s.id) > -1, t = tierOf(r,s);
+        var cls = 'seat' + (t==='front'?' front':t==='saver'?' saver':'') + (on?' sel':'');
+        h += '<button class="'+cls+'" type="button" data-seat="'+s.id+'" aria-pressed="'+on+'" aria-label="'+s.name+', '+rs(price(r,s))+'">'
+          + '<span>'+(on?'✓ ':'')+s.short+'</span><b class="num">'+rs(price(r,s))+'</b></button>';
+      });
+      h += '</div>';
+    });
+    h += '</div><div class="legend">'
+      + '<span><i class="sw front"></i>Front, costs more</span><span><i class="sw"></i>Standard</span>'
+      + '<span><i class="sw saver"></i>Saver</span><span><i class="sw sel"></i>Your seat</span><span><i class="sw tk"></i>Booked</span></div>';
+    $('screen').innerHTML = h;
+    var n = S.sel.length;
+    $('cta').innerHTML = '<div class="sum"><small>'+(n? n+' seat'+(n>1?'s':'')+' · '+seatList() : 'No seat selected')+'</small><b class="num">'+rs(selTotal())+'</b></div>'
+      + '<button class="btn" type="button" id="next"'+(n?'':' disabled')+'>Continue</button>';
+  }
+
+  function renderReview(){
+    var r = S.ride, n = S.sel.length, fee = FEE*n, tot = selTotal()+fee;
+    $('barTitle').textContent = 'Review and pay';
+    $('barSub').textContent = ROUTE.from + ' → ' + ROUTE.to + ' · ' + ROUTE.date;
+    var h = '<div class="card"><h3>Your ride</h3>'
+      + '<div class="line"><span>'+r.dep+' · '+ROUTE.pick+'</span></div>'
+      + '<div class="line"><span>'+r.arr+' · '+ROUTE.drop+'</span></div>'
+      + '<div class="line"><span class="hint">'+r.driver+' · '+r.car+'</span></div></div>';
+    h += '<div class="card"><h3>Price</h3>';
+    S.sel.forEach(function(id){var s=seat(r,id);h += '<div class="line"><span>'+s.name+'</span><span class="num">'+rs(price(r,s))+'</span></div>'});
+    h += '<div class="line"><span>Booking fee ('+n+' × '+rs(FEE)+')</span><span class="num">'+rs(fee)+'</span></div>'
+      + '<div class="line total"><span>Total</span><span class="num">'+rs(tot)+'</span></div></div>';
+    h += '<div class="card"><h3>Pay with</h3>'
+      + ['upi|UPI','card|Debit or credit card','nb|Net banking'].map(function(p){var a=p.split('|');
+          return '<label class="pay" for="pay-'+a[0]+'"><input type="radio" name="pay" id="pay-'+a[0]+'" value="'+a[0]+'"'+(S.pay===a[0]?' checked':'')+'><span>'+a[1]+'</span></label>'}).join('')
+      + '<p class="hint">Demo only. No payment details are asked for and no money moves.</p></div>';
+    $('screen').innerHTML = h;
+    $('cta').innerHTML = '<button class="btn wide" type="button" id="payBtn">Pay '+rs(tot)+' (demo)</button>';
+  }
+
+  function renderDone(){
+    var r = S.ride, n = S.sel.length, tot = selTotal()+FEE*n, front = S.sel.indexOf('F1') > -1;
+    $('barTitle').textContent = 'Booking confirmed';
+    $('barSub').textContent = 'Demo booking, nothing was charged';
+    var h = '<span class="ok" aria-hidden="true">✓</span>'
+      + '<div class="center"><h2>Your seat is reserved</h2><p class="hint">'+r.driver+' has been told which seat is yours.</p></div>'
+      + '<div class="ticket"><div class="line"><span class="hint">Seat'+(n>1?'s':'')+'</span><span class="hint">Paid</span></div>'
+      + '<div class="line"><span class="big">'+seatList()+'</span><span class="big num">'+rs(tot)+'</span></div>'
+      + '<div class="line"><span>'+ROUTE.from+' → '+ROUTE.to+'</span><span>'+ROUTE.date+', '+r.dep+'</span></div>'
+      + '<div class="line"><span class="hint">Pickup: '+ROUTE.pick+'</span></div></div>';
+    if(front){
+      var back = seats(r).filter(function(s){return !s.taken && s.tier!=='front' && S.sel.indexOf(s.id)<0})
+        .sort(function(a,b){return price(r,a)-price(r,b)})[0];
+      h += '<div class="safety"><strong>Rather sit in the back?</strong>'
+        + '<p>At pickup you can move to any free back seat, no questions asked. We refund the difference automatically.'
+        + (back ? ' Right now that would be '+back.name.toLowerCase()+', refund '+rs(r.prem - delta(r,back))+'.' : '')+'</p></div>';
+    }
+    $('screen').innerHTML = h;
+    $('cta').innerHTML = '<button class="btn wide" type="button" id="again">Start again</button>';
+  }
+
+  function renderDriver(){
+    var r = byId(S.drv);
+    $('ridePick').innerHTML = RIDES.map(function(x){
+      return '<button type="button" data-drv="'+x.id+'" aria-pressed="'+(x.id===S.drv)+'">'+x.car+' · '+x.driver+'</button>'}).join('');
+    $('prem').value = r.prem;
+    $('premVal').textContent = r.prem ? '+' + rs(r.prem) : 'Off (seat assignment only)';
+    $('modeFlag').hidden = S.mode !== 'uplift';
+  }
+
+  function renderPanel(){
+    var r = S.ride || byId(S.drv), all = seats(r);
+    var body = '', flat = r.base*all.length, neu = 0;
+    all.forEach(function(s){var d = delta(r,s); neu += price(r,s);
+      body += '<tr><td>'+s.name+'</td><td class="r num">'+rs(r.base)+'</td><td class="r num">'+rs(price(r,s))+'</td><td class="r num'+(d>0?' up':d<0?' down':'')+'">'+signed(d)+'</td></tr>'});
+    $('tTitle').textContent = 'Seat prices in the ' + r.car;
+    $('tBody').innerHTML = body;
+    $('tFlat').textContent = rs(flat); $('tNew').textContent = rs(neu);
+    $('tDiff').textContent = neu===flat ? 'No change' : signed(neu-flat) + ' (' + ((neu-flat)/flat*100).toFixed(1) + '%)';
+    $('tNote').textContent = S.mode==='neutral'
+      ? 'The front-seat premium pays for the discounts on the seats people avoid, so a full car earns the driver the same as today. On a part-full car the front seat usually sells first, so the driver earns more.'
+      : 'Other seats keep the driver\'s price, so every front-seat sale is extra income for the driver.';
+    var n = S.ride ? S.sel.length : 0, d = n ? selTotal() : 0, p = FEE*n;
+    $('mRider').textContent = rs(d+p); $('mDriver').textContent = rs(d); $('mPlat').textContent = rs(p);
+    $('mNote').textContent = n
+      ? 'The seat price goes to the driver in full. The platform keeps the ' + rs(FEE) + ' booking fee per seat, which only exists because the booking is paid in the app.'
+      : 'Pick a ride and a seat in the phone to see the split.';
+  }
+
+  function render(){
+    var order = ['list','seats','review','done'], i = order.indexOf(S.screen);
+    Array.prototype.forEach.call($('steps').children, function(el,k){el.className = k<=i ? 'on' : ''});
+    $('back').hidden = (S.screen==='list' || S.screen==='done');
+    ({list:renderList, seats:renderSeats, review:renderReview, done:renderDone})[S.screen]();
+    renderDriver();
+    renderPanel();
+  }
+
+  document.addEventListener('click', function(e){
+    var t = e.target.closest('button'); if(!t) return;
+    if(t.dataset.drv){S.drv = t.dataset.drv; if(S.ride && S.ride.id!==S.drv && S.screen!=='list' && S.screen!=='done'){S.ride=null;S.sel=[];S.screen='list'} render(); return}
+    if(t.dataset.ride){S.ride = byId(t.dataset.ride); S.drv = S.ride.id; S.sel=[]; go('seats'); return}
+    if(t.dataset.seat){
+      var id = t.dataset.seat, k = S.sel.indexOf(id);
+      if(k>-1) S.sel.splice(k,1); else if(S.sel.length<MAX) S.sel.push(id);
+      render();
+      var again = document.querySelector('[data-seat="'+id+'"]'); if(again) again.focus();
+      return;
+    }
+    if(t.id==='next'){go('review');return}
+    if(t.id==='payBtn'){go('done');return}
+    if(t.id==='again'){S.ride=null;S.sel=[];S.pay='upi';go('list');return}
+    if(t.id==='back'){go(S.screen==='review'?'seats':'list');return}
+  });
+  document.addEventListener('change', function(e){
+    if(e.target.name==='pay') S.pay = e.target.value;
+    if(e.target.name==='mode'){S.mode = e.target.value; render()}
+  });
+  $('prem').addEventListener('input', function(){byId(S.drv).prem = +this.value; render()});
+  render();
+})();
+</script>
+</html>
